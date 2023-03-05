@@ -271,19 +271,110 @@ select * from sys_permission where id=#{id};
     </delete>
 ```
 
+## 8.联表查询
+
+G:\Document\mdNote\思维导图\Mysql级联查找.emmx
+
+![image-20230224135650890](../../Typora/image-20230224135650890.png)
 
 
 
+### 1.查找过程:
+
+SysUser需要查找Sys Role,根据的是SysUser的roleId和SysRole 的id,
+
+如果查找的内容只是基础类型,select语句的返回类型为resultType="要查找的类",
+
+当如果里面嵌套了类,就要用resultMap即结果集.
+
+collection为嵌套的类,
+
+```xml
+    <select id="findUserInfoByName" resultMap="userMap">
+        select * from sys_user where user_name=#{username}
+    </select>
+    <!--  新建一个结果集-userMap,结果集供select查找命令使用.  -->
+    <resultMap id="userMap" type="com.example.demo.entity.SysUser">
+        <id column="id" property="id"/>
+        <result column="user_name" property="userName"/>
+        <result column="password" property="password"/>
+        <result column="nick_name" property="nickName"/>
+        <result column="sex" property="sex"/>
+        <result column="avatar" property="avatar"/>
+        <result column="address" property="address"/>
+        <result column="open_id" property="openId"/>
+        <result column="status" property="status"/>
+        <result column="admin" property="admin"/>
+        <result column="phone_number" property="phoneNumber"/>
+        <result column="role_id" property="roleId"/>
+        <!--    新建一个集合链接, 将需要查询的内容链接到其他查询块-findRole.将role_id传递到查询块,返回role类  -->
+        <collection column="role_id" property="role" ofType="com.example.demo.entity.SysRole" select="findRole"/>
+    </resultMap>
+    <!--在userMap中,已经将role_id传递进来,根据role_id查询即可-->
+    <select id="findRole" resultMap="roleMap">
+        select * from sys_role where id=#{role_id}
+    </select>
+```
 
 
 
+### 2.查找SysRole
+
+查找的SysRole里同样有嵌套类,嵌套了SysMenu.根据SysRole的id和SysMenu的id.根据关系对应表roles_menus来查找
 
 
 
+```xml
+<!--在userMap中,已经将role_id传递进来,根据role_id查询即可-->
+    <select id="findRole" resultMap="roleMap">
+        select * from sys_role where id=#{role_id}
+    </select>
+    <!--结果集-roleMap: -->
+    <resultMap id="roleMap" type="com.example.demo.entity.SysRole">
+        <id column="id" property="id"/>
+        <result column="label" property="label"/>
+        <result column="code" property="code"/>
+        <!--根据role的id,建立一个集合链接来查询menu-->
+        <collection column="id" property="menus" ofType="com.example.demo.entity.SysMenu" select="findMenus"/>
+    </resultMap>
+
+    <!--查询菜单链接-findMenus,传入role的id,根据role的id去roles_menus表中将menu的一级菜单查出来-->
+    <select id="findMenus" resultMap="menusMap">
+        select * from sys_menu where id in (select menu_id from roles_menus where role_id=#{id})
+    </select>
+```
+
+select * from sys_menu where id in (select menu_id from roles_menus where role_id=#{id})
+
+查找出roles_menus表下role_id=id对应的所有menu_id,然后根据menu_id查找出sys_menu表下所有的menu.
 
 
 
+### 3.查找子SysMenu
+
+SysMenu下有子SysMenu,根据的是parentId
+
+![image-20230224141536511](../../Typora/image-20230224141536511.png)
 
 
 
+```xml
+<!--由于roles_menus表只有一级菜单,需要将级联菜单也找出来-->
+    <resultMap id="menusMap" type="com.example.demo.entity.SysMenu">
+        <id column="id" property="id"/>
+        <result column="path" property="path"/>
+        <result column="icon" property="icon"/>
+        <result column="component" property="component"/>
+        <result column="title" property="title"/>
+        <result column="parent_id" property="parentId"/>
+        <collection column="id" property="menus" ofType="com.example.demo.entity.SysMenu" select="findSonMenus"/>
+    </resultMap>
+    <!--因为菜单不止二级,仍需要再往下查找. 查找时根据传进来的id来匹配是否有符合的parent_id
+        如果不需要往下查找了,返回的结果为resultType即可-->
+    <select id="findSonMenus" resultMap="menusMap">
+        select * from sys_menu where parent_id=#{id}
+    </select>
+```
+
+只要resultMap为menusMap, 只要本SysMenu的id能在下一个SysMenu的parentId找到,就会一直递归下去.
 

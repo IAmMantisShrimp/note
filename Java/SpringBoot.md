@@ -5820,11 +5820,9 @@ public class MyBatisConfig {
 
 
 
-# 连接数据库
+# 连接Mysql数据库
 
 注意引入mybais和mybatis-plus的区别:
-
-
 
 ## 1.引入maven依赖
 
@@ -6008,6 +6006,977 @@ mybatis:
 ```
 
 ![image-20230222144804071](../Typora/image-20230222144804071.png)
+
+
+
+
+
+
+
+# 3.连接Oracle数据库
+
+## 1.导入依赖
+
+https://blog.csdn.net/weixin_45767596/article/details/122091544
+
+### 1.找到jar包
+
+D:/app/ppx/product/11.2.0/dbhome_1/jdbc/lib/ojdbc6.jar
+
+![image-20230303180838862](../Typora/image-20230303180838862.png)
+
+### 2.打开cmd
+
+执行,jar路径和版本号11.2.0.1.0是自己设置的:
+
+```txt
+mvn install:install-file -Dfile=/D:/app/ppx/product/11.2.0/dbhome_1/jdbc/lib/ojdbc6.jar -DgroupId=com.oracle -DartifactId=ojdbc6 -Dversion=11.2.0.1.0 -Dpackaging=jar -DgeneratePom=true
+```
+
+![image-20230303181040136](../Typora/image-20230303181040136.png)
+
+
+
+### 3.使用依赖
+
+```xml
+        <!--oracle-->
+        <dependency>
+            <groupId>com.oracle</groupId>
+            <artifactId>ojdbc6</artifactId>
+            <version>11.2.0.1.0</version>
+        </dependency>
+				<!-- Mybatis -->
+        <dependency>
+            <groupId>org.mybatis.spring.boot</groupId>
+            <artifactId>mybatis-spring-boot-starter</artifactId>
+            <version>2.2.2</version>
+        </dependency>
+        <!-- 与数据库操作相关依赖 -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-jdbc</artifactId>
+        </dependency>
+```
+
+## 2.配置Oracle
+
+
+
+```yaml
+spring:
+  datasource:
+    driver-class-name: oracle.jdbc.driver.OracleDriver
+    url: jdbc:oracle:thin:@localhost:1521:orcl
+#    url: jdbc:oracle:thin:@192.168.221.205:1521:orcl
+    username: wateruser
+    password: 123456
+mybatis:
+  mapper-locations: classpath:com/example/demo/mapper/xml/*.xml
+  type-aliases-package: com.example.demo.entity
+  configuration:
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl    
+```
+
+## 3.增加静态资源解析
+
+```xml
+        <!--静态资源解析-->
+        <resources>
+            <resource>
+                <directory>src/main/java</directory>
+                <includes>
+                    <include>**/*.xml</include>
+                </includes>
+            </resource>
+        </resources>
+```
+
+
+
+## 4.新建mapper及entiry
+
+![image-20230303183359156](../Typora/image-20230303183359156.png)
+
+## 5.简单测试
+
+```java
+package com.example.demo.mapper;
+
+import com.example.demo.entiry.Owner;
+import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Select;
+
+import java.util.List;
+
+/**
+ * @author HuaRunSheng
+ * @date 2023/3/3 18:23
+ * @description :
+ */
+@Mapper
+public interface OwnerMapper {
+    @Select("select count(*) from t_owners")
+    Integer getCount();
+}
+
+```
+
+![image-20230303183515137](../Typora/image-20230303183515137.png)
+
+
+
+## 6.编写xml
+
+```xml
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.demo.mapper.OwnerMapper">
+    <select id="findAll" resultType="com.example.demo.entity.Owner">
+        select * from t_owners
+    </select>
+</mapper>
+```
+
+![image-20230303184140610](../Typora/image-20230303184140610.png)
+
+
+
+
+
+# SpringSecurity
+
+## 1.导入依赖
+
+```xml
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-security</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+```
+
+## 2.启动项目
+
+会出现security的登录密码:
+
+![image-20230225120601886](../Typora/image-20230225120601886.png)
+
+输入项目地址:http://localhost:2521/login
+
+出现登录界面:
+
+![image-20230225121214140](../Typora/image-20230225121214140.png)
+
+账号是:user
+
+密码是:6b42ff0a-2e5d-4a87-8a18-726553eb8174
+
+因为没写登录界面的接口,所以进去后是404
+
+![image-20230225121443098](../Typora/image-20230225121443098.png)
+
+
+
+## 3.实现UserDetails接口
+
+在用户实体类中实现UserDetails接口,并实现接口中的几个方法
+
+![image-20230225121753876](../Typora/image-20230225121753876.png)
+
+
+
+```java
+    /**
+     * 权限数据
+     * @return
+     */
+    @Override
+    @JsonIgnore
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        List<GrantedAuthority> list=new ArrayList<>();
+        //role.forEach(item->list.add(new SimpleGrantedAuthority("ROLE_"+item.getCode())));
+        //list.add(new SimpleGrantedAuthority("ROLE_admin"));
+        list.add(new SimpleGrantedAuthority("ROLE_"+role.getCode()));
+        return list;
+    }
+
+    /**
+     * 获取用户名
+     * @return
+     */
+    @Override
+    public String getUsername() {
+        return userName;
+    }
+
+    /**
+     * 账号是否过期
+     * @return
+     */
+    @Override
+    @JsonIgnore
+    public boolean isAccountNonExpired() {
+        return false;
+    }
+
+    /**
+     * 账号是否被锁定
+     * @return
+     */
+    @Override
+    @JsonIgnore
+    public boolean isAccountNonLocked() {
+        return false;
+    }
+
+    /**
+     * 当前账号证书是否过期
+     * @return
+     */
+    @Override
+    @JsonIgnore
+    public boolean isCredentialsNonExpired() {
+        return false;
+    }
+
+    // 是否被禁用
+    @Override
+    @JsonIgnore
+    public boolean isEnabled() {
+        return false;
+    }
+```
+
+
+
+## 4.登录处理
+
+F:\Java\PracticeProject\20220515个人运动管理平台\20230218练习\demo\src\main\java\com\example\demo\service\implement\SysUserServiceImpl.java
+
+处理从前端传过来的登录信息:
+
+新建处理类--UserService
+
+新建方法public Result login(UserLoginVo loginVo)
+
+在实现类中实现方法
+
+### 1.注入所需的spring security类:
+
+```java
+@Resource
+private UserDetailsService userDetailsService;
+@Resource
+private PasswordEncoder passwordEncoder;
+```
+
+### 2.根据用户名生成UserDetails
+
+loginVo.getUsername()是前端传过来的数据
+
+userDetailsService.loadUserByUsername会从数据口中加载此用户的基本信息
+
+passwordEncoder.matches(loginVo.getPassword(), userDetails.getPassword()):
+
+判断密码是否正确,因为存入的是加密之后的密码,所以要用passwordEncoder进行匹配
+
+```java
+//根据前端传过来的User用户信息,从数据库加载此用户的所有信息
+        UserDetails userDetails = userDetailsService.loadUserByUsername(loginVo.getUsername());
+        if (userDetails == null){
+            return Result.fail("该账号不存在.");
+        }
+/*
+         * Verify the encoded password obtained from storage matches the submitted raw
+         * password after it too is encoded. Returns true if the passwords match, false if
+         * they do not. The stored password itself is never decoded.
+         * @param rawPassword the raw password to encode and match
+         * @param encodedPassword the encoded password from storage to compare with
+         * @return true if the raw password, after encoding, matches the encoded password from
+         * storage
+         * boolean matches(CharSequence rawPassword, String encodedPassword);
+         */
+        else if ( !passwordEncoder.matches(loginVo.getPassword(), userDetails.getPassword())){
+            return Result.fail("密码错误.");
+        }else if (userDetails.isEnabled()){
+            return Result.fail("该账号已经禁用,请联系管理员.");
+        }
+```
+
+
+
+### 3.应用认证信息
+
+此时可以生成一个认证token,参数是已经加载的userDtails,认证信息,和权限数据,除了userDetails其他可以为空.如下:
+
+UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+
+然后将认证token存储应用到Security上下文容器中
+
+```java
+        //验证身份成功,在security对象中存入登录信息
+        /*
+         * This constructor should only be used by <code>AuthenticationManager</code> or
+         * <code>AuthenticationProvider</code> implementations that are satisfied with
+         * producing a trusted (i.e. {@link #isAuthenticated()} = <code>true</code>)
+         * authentication token.
+         * @param principal
+         * @param credentials
+         * @param authorities
+         */
+        UsernamePasswordAuthenticationToken authenticationToken=new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+        // 为springsecurity容器设置认证信息
+        SecurityContextHolder.getContext().setAuthentication(authenticationToken);
+
+
+```
+
+### 4.返回token
+
+token生成在下一步:
+
+```Java
+        // 根据登录信息获取token,需要借助jwt来生成token
+        String token = tokenUtil.generateToken(userDetails);
+        Map<String, String> map=new HashMap<>(2);
+        map.put("tokenHead", tokenHead);
+        map.put("token", token);
+        return Result.success("登录成功", map);
+```
+
+
+
+## 5.生成token
+
+F:\Java\PracticeProject\20220515个人运动管理平台\20230218练习\demo\src\main\java\com\example\demo\util\TokenUtil.java
+
+### 1.引入jwt依赖
+
+```xml
+        <dependency>
+            <groupId>com.auth0</groupId>
+            <artifactId>java-jwt</artifactId>
+            <version>3.10.3</version>
+        </dependency>
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt</artifactId>
+            <version>0.9.1</version>
+        </dependency>
+```
+
+### 2.写入jwt配置
+
+由于签名,过期时间,token头可能在多出都需要用到,所以统一写入到application.yaml文件中.
+
+```yaml
+# jwt配置
+jwt:
+  # 请求头
+  tokenHeader: Authorization
+  #  签名
+  secret: hrsxcl0205
+  # jwt过期时间
+  expiration: 18000
+  # token头部,注意后面有个空格
+  tokenHead: 'Bearer '
+```
+
+Java中使用:
+
+@Value("${jwt.secret}")
+
+private String secret;
+
+### 2.新建TokenUtil
+
+生成token
+
+```java
+    //  读取配置文件中的jwt.secret(签名)
+    @Value("${jwt.secret}")
+    private String secret;
+    @Value("${jwt.expiration}")
+    private long expiration;
+    // 生成token
+    public String generateToken(UserDetails userDetails){
+        Map<String, Object> map=new HashMap<>(2);
+        map.put("username",userDetails.getUsername());
+        // 创建时间
+        map.put("created",new Date());
+        return this.generateJwt(map);
+    }
+    public String generateJwt(Map<String, Object> map){
+        //System.out.println("map: "+map);
+        // 生成加密信息
+        return Jwts.builder()
+                .setClaims(map)
+                // 加密
+                .signWith(SignatureAlgorithm.HS512,secret)
+                // 设置过期时间
+                .setExpiration(new Date(System.currentTimeMillis()+expiration*1000))
+                // 生成jwt
+                .compact();
+    }
+
+```
+
+
+
+编写token的其他方法
+
+```java
+
+    /**
+     * 获取token的主体,即generateToken的map(未加密)部分
+     * @param token
+     * @return
+     */
+    public Claims getTokenBody(String token){
+        // 解密
+        try {
+            return Jwts.parser()
+                    // 输入密钥签名
+                    .setSigningKey(secret)
+                    // 解密
+                    .parseClaimsJws(token)
+                    .getBody();
+        }catch (Exception e){
+            return null;
+        }
+
+    }
+
+    /**
+     * 根据token得到用户名
+     * @param token
+     * @return
+     */
+    public String getUsernameByToken(String token){
+        /**
+         * header={alg=HS512},body={exp=1652869860, created=1652868060488, username=root},signature=rIRMVQUsKew406Mb0jNMMWt-b4rmdPWqX94kM2apVqqev1qkQIb_1rNHMW9rQKwn4F-B7SGK9S7E0uAhZkC5bA
+         * claims：  {exp=1652869860, created=1652868060488, username=root}
+         */
+        Claims claims=this.getTokenBody(token);
+        //System.out.println("token："+token);
+        //System.out.println("claims："+claims);
+        //System.out.println(claims.get("username"));
+        return this.getTokenBody(token).get("username").toString();
+    }
+
+    /**
+     * 根据token判断当前时间内,该token是否过期
+     * @param token
+     * @return
+     */
+    public boolean isExpiration(String token){
+        Claims tokenBody = this.getTokenBody(token);
+        System.out.println("tokenBody: "+tokenBody);
+        Date expiration = tokenBody.getExpiration();
+        //System.out.println(expiration);
+        //System.out.println(new Date());
+        //System.out.println(expiration.before(new Date()));
+        return expiration.before(new Date());
+    }
+
+    /**
+     * 更新token
+     * @param token
+     * @return
+     */
+    public String refreshToken(String token){
+        Claims claims=this.getTokenBody(token);
+        claims.setExpiration(new Date());
+        return this.generateJwt(claims);
+    }
+
+    /**
+     * 验证token是否有效
+     */
+    public boolean validateToken(String token, UserDetails userDetails) {
+        String username = getUsernameByToken(token);
+        return username.equals(userDetails.getUsername()) && !isExpiration(token);
+    }
+```
+
+
+
+## 6.Spring Security 配置
+
+F:\Java\PracticeProject\20220515个人运动管理平台\20230218练习\demo\src\main\java\com\example\demo\config\security
+
+### 1.新建一个配置类
+
+```path
+F:\Java\PracticeProject\20220515个人运动管理平台\20230218练习\demo\src\main\java\com\example\demo\config\security\SecurityConfig.java
+```
+
+
+
+### 2.配置白名单
+
+```java
+    /**
+     * 一般用来配置白名单(没有权限也可以访问资源)
+     * @param web
+     * @throws Exception
+     */
+    @Override
+    public void configure(WebSecurity web) throws Exception {
+        web.ignoring()
+                // 可以是String,也可以是字符数组
+                .mvcMatchers(SecurityContentsUtil.WHITE_LIST);
+    }
+```
+
+白名单可以是字符串数组,也可以封装成一个类:
+
+封装成类:SecurityContentsUtil
+
+```java
+package com.example.demo.config.security.contents;
+
+/**
+ * @author HuaRunSheng
+ * @date 2022/5/19 11:44
+ * @description :
+ */
+public class SecurityContentsUtil {
+    // 白名单
+    public static final String[] WHITE_LIST={
+            //后端接口
+            "/test/hello",
+            "/test/login",
+            "/user/login",
+            "/user/forgot",
+            "/user/code/*",
+            "/mini/login",
+            "/mini/*",
+
+            // swagger相关
+            "/swagger-ui.html",
+            "/**/api-docs",
+            "/webjars/**",
+            "/swagger-resources/**",
+            "/doc.html",
+            "/doc.html/**",
+            "/favicon.ico",
+
+            "/v2/**",
+            "/configuration/ui",
+            "/configuration/security",
+            "/csrf/**",
+
+            "/",
+            //增加srs的过滤名单 2020-6-2 dev-api/v1/srs/
+            "/srs/v1/**",
+            "/druid/**",
+            "/*/api-docs",
+    };
+}
+
+```
+
+
+
+### 3.自定义登录逻辑
+
+
+
+```java
+
+    /**
+     * 自定义登录逻辑配置,也即是配置到security中进行认证
+     * @param auth
+     * @throws Exception
+     */
+    @Override
+    protected void configure(AuthenticationManagerBuilder auth) throws Exception {
+        auth.userDetailsService(userDetailsServiceImpl).passwordEncoder(passwordEncoder);
+    }
+```
+
+userDetailsServiceImpl是重写的UserDetailService:
+
+设置登录的逻辑,已经登录失败处理,  这里用到了redis缓存,也可以不用:
+
+```java
+package com.example.demo.config.security.service;
+
+import com.example.demo.entity.SysRole;
+import com.example.demo.entity.SysUser;
+import com.example.demo.mapper.SysUserMapper;
+import com.example.demo.util.RedisUtil;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.stereotype.Service;
+
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * @author HuaRunSheng
+ * @description 实现UserDetailsService接口实现是定义登录逻辑,重写loadUserByUsername登录方法
+ * @date 2022/5/18 10:55
+ */
+@Service
+public class UserDetailsServiceImpl implements UserDetailsService {
+    @Autowired
+    private SysUserMapper userMapper;
+    @Autowired
+    private RedisUtil redisUtil;
+    @Override
+    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+        //1.在mapper中自定义登录,根据用户名获取用户信息
+        SysUser user = userMapper.findUserInfoByName(username);
+
+        if (redisUtil.hasKey("userInfo_"+username)){
+            System.out.println("redis中取");
+            // 缓存中存在用户信息,直接从redis中取出
+            user = (SysUser) redisUtil.getValue("userInfo_"+username);
+        }else{
+            System.out.println("数据库中取");
+            if (user==null){
+                System.out.println("用户名或密码错误");
+                return null;
+                //throw new RuntimeException("用户名或密码错误");
+            }
+
+            // 设置用户的角色信息
+            user.setRole(userMapper.findRole(user.getId()));
+            //if (user.isAdmin()){
+            //    List<SysRole> list=new ArrayList<>();
+            //    SysRole sysRole = new SysRole();
+            //    sysRole.setCode("admin");
+            //    list.add(sysRole);
+            //    user.setRoles(list);
+            //}else{
+            //    user.setRoles(userMapper.findRoles(user.getId()));
+            //}
+            // 将userInfo存储到缓存中
+            redisUtil.setValueTime("userInfo_"+username, user, 5);
+        }
+        return user;
+    }
+}
+
+```
+
+### 4.核心配置
+
+
+
+```java
+
+    /**
+     * 核心配置
+     * @param http
+     * @throws Exception
+     */
+    @Override
+    protected void configure(HttpSecurity http) throws Exception {
+        //1.使用jwt,首先关闭跨域攻击
+        http.csrf().disable();
+        //2.关闭session,前端传jwt过来
+        http.sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS);
+        //3.请求头需要进行认证之后才能访问,除白名单以外的资源
+        http.authorizeRequests().anyRequest().authenticated();
+        //4.关闭缓存
+        http.headers().cacheControl();
+        //5.token过滤器,校验token
+        http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+        //6.没有登录,没有权限访问资源自定义返回结果
+        http.exceptionHandling().authenticationEntryPoint(jwtAuthenticationEntryPoint).accessDeniedHandler(jwtAccessDeniedHandler);
+
+    }
+```
+
+### 5.token过滤认证
+
+jwtAuthenticationFilter:
+
+在请求头,判断是否携带的token,携带的token是否有效,并检验token中的用户名,是否与UserDetailService中的用户名一致.
+
+如果都检验通过,则更新认证,并放行
+
+```java
+package com.example.demo.config.security.handler;
+
+import com.example.demo.config.security.service.UserDetailsServiceImpl;
+import com.example.demo.util.TokenUtil;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
+import org.springframework.stereotype.Component;
+import org.springframework.web.filter.OncePerRequestFilter;
+
+import javax.servlet.FilterChain;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+
+/**
+ * @author HuaRunSheng
+ * @description token认证过滤器，在接口访问前进行过滤
+ * @date 2022/5/18 10:23
+ */
+@Component
+public class JwtAuthenticationFilter extends OncePerRequestFilter {
+    @Autowired
+    private TokenUtil tokenUtil;
+    @Value("${jwt.tokenHeader}")
+    private String tokenHeader;
+    @Value("${jwt.tokenHead}")
+    private String tokenHead;
+    @Autowired
+    UserDetailsServiceImpl userDetailsService;
+    /**
+     * 请求前后去请求头信息token
+     * @param request
+     * @param response
+     * @param filterChain
+     * @throws ServletException
+     * @throws IOException
+     */
+    @Override
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
+        //1.获取token
+        String header=request.getHeader(tokenHeader);
+        //2.判断token是否存在
+        if (null!=header && header.startsWith(tokenHead)){
+            //拿到token主体
+            String token = header.substring(tokenHead.length());
+            //根据token主体获取用户名
+            String username=tokenUtil.getUsernameByToken(token);
+            //System.out.println("getContext: "+SecurityContextHolder.getContext());
+            //System.out.println("getAuthentication:"+SecurityContextHolder.getContext().getAuthentication());
+            //token存在,当没有登录信息
+            if (null != username && null == SecurityContextHolder.getContext().getAuthentication()){
+                //没有登录信息,直接登录
+                UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+                System.out.println("userDetails: "+userDetails);
+                System.out.println("getAuthorities: "+userDetails.getAuthorities());
+                //判断token是否有效
+                if (!tokenUtil.isExpiration(token) && username.equals(userDetails.getUsername())){
+                    // 刷新security中的用户信息.
+                    UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+                    authenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                    SecurityContextHolder.getContext().setAuthentication(authenticationToken);
+                }
+            }
+        }
+        // 过滤器放行
+        filterChain.doFilter(request,response);
+    }
+}
+
+```
+
+### 6.也可以设置错误返回格式
+
+```java
+package com.example.demo.config.security.handler;
+
+import com.example.demo.util.Result;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.web.AuthenticationEntryPoint;
+import org.springframework.stereotype.Component;
+
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.io.PrintWriter;
+
+/**
+ * @description :当用户未登录和token过期的情况下访问资源
+ * @author :HuaRunSheng
+ * @date :2022/5/18 9:58
+ */
+@Component
+public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
+    @Override
+    public void commence(HttpServletRequest request, HttpServletResponse response, AuthenticationException authException) throws IOException, ServletException {
+        response.setStatus(401);
+        System.out.println("response.setStatus(401);");
+        response.setCharacterEncoding("UTF-8");
+        // 返回的数据格式
+        response.setContentType("application/json");
+        PrintWriter writer = response.getWriter();
+        writer.write(new ObjectMapper().writeValueAsString(Result.fail("您尚未登录,请登录后操作.")));
+        writer.flush();
+        writer.close();
+    }
+}
+
+```
+
+```java
+package com.example.demo.config.security.handler;
+
+import com.example.demo.util.Result;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.web.access.AccessDeniedHandler;
+import org.springframework.stereotype.Component;
+
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.io.PrintWriter;
+
+/**
+ * @description  没有权限访问时返回的结果
+ * @author HuaRunSheng
+ * @date 2022/5/18 10:14
+ */
+@Component
+public class JwtAccessDeniedHandler implements AccessDeniedHandler {
+    @Override
+    public void handle(HttpServletRequest request, HttpServletResponse response, AccessDeniedException accessDeniedException) throws IOException, ServletException {
+        response.setStatus(403);
+        System.out.println("response.setStatus(403);");
+        response.setCharacterEncoding("UTF-8");
+        // 返回的数据格式
+        response.setContentType("application/json");
+        PrintWriter writer = response.getWriter();
+        writer.write(new ObjectMapper().writeValueAsString(Result.fail("权限不足，请联系管理员。")));
+        writer.flush();
+        writer.close();
+    }
+}
+
+```
+
+
+
+
+
+```java
+package com.example.demo.config.security;
+
+import com.example.demo.config.security.contents.SecurityContentsUtil;
+import com.example.demo.config.security.handler.JwtAccessDeniedHandler;
+import com.example.demo.config.security.handler.JwtAuthenticationEntryPoint;
+import com.example.demo.config.security.handler.JwtAuthenticationFilter;
+import com.example.demo.config.security.service.UserDetailsServiceImpl;
+import com.example.demo.entity.SysUser;
+import com.example.demo.service.SysUserService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
+import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.builders.WebSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configuration.WebSecurityConfiguration;
+import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+
+import javax.annotation.Resource;
+
+/**
+ * @description: 权限基本配置
+ * @author: HuaRunSheng
+ * @date: 2022/5/17 15:16
+ */
+@Configuration
+//开启Spring Security
+@EnableWebSecurity
+//全局方法,权限测试
+@EnableGlobalMethodSecurity(prePostEnabled = true)
+public class SecurityConfig extends WebSecurityConfigurerAdapter {
+    // 加密算法
+    @Resource
+    PasswordEncoder passwordEncoder;
+    @Autowired
+    private UserDetailsServiceImpl userDetailsServiceImpl;
+    @Autowired
+    private JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
+    @Autowired
+    private JwtAccessDeniedHandler jwtAccessDeniedHandler;
+    @Autowired
+    private JwtAuthenticationFilter jwtAuthenticationFilter;
+
+    /**
+     * 自定义登录逻辑配置,也即是配置到security中进行认证
+     * @param auth
+     * @throws Exception
+     */
+    @Override
+    protected void configure(AuthenticationManagerBuilder auth) throws Exception {
+        auth.userDetailsService(userDetailsServiceImpl).passwordEncoder(passwordEncoder);
+    }
+    /**
+     * 一般用来配置白名单(没有权限也可以访问资源)
+     * @param web
+     * @throws Exception
+     */
+    @Override
+    public void configure(WebSecurity web) throws Exception {
+        web.ignoring()
+                // 可以是String,也可以是字符数组
+                .mvcMatchers(SecurityContentsUtil.WHITE_LIST);
+    }
+
+    /**
+     * 核心配置
+     * @param http
+     * @throws Exception
+     */
+    @Override
+    protected void configure(HttpSecurity http) throws Exception {
+        //1.使用jwt,首先关闭跨域攻击
+        http.csrf().disable();
+        //2.关闭session,前端传jwt过来
+        http.sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS);
+        //3.请求头需要进行认证之后才能访问,除白名单以外的资源
+        http.authorizeRequests().anyRequest().authenticated();
+        //4.关闭缓存
+        http.headers().cacheControl();
+        //5.token过滤器,校验token
+        http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+        //6.没有登录,没有权限访问资源自定义返回结果
+        http.exceptionHandling().authenticationEntryPoint(jwtAuthenticationEntryPoint).accessDeniedHandler(jwtAccessDeniedHandler);
+
+    }
+}
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
 
 # 补充
 
