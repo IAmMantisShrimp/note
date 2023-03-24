@@ -498,6 +498,7 @@ import org.springframework.data.redis.serializer.StringRedisSerializer;
  */
 @Configuration
 public class RedisConfig {
+
     @Bean
     public RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory redisConnectionFactory) {
         RedisTemplate<String, Object> template = new RedisTemplate<>();
@@ -767,7 +768,9 @@ redisUtil.setValueTime("userInfo"+username, user, 5);
 
 
 
-### 数据库和缓存一致性
+## 数据库和缓存一致性
+
+![img](https://p8.itc.cn/q_70/images03/20230314/b5a71e055f7642029bdb2d09822ae253.png)
 
 #### 问题来源
 
@@ -775,31 +778,9 @@ redisUtil.setValueTime("userInfo"+username, user, 5);
 
 读取缓存步骤一般没有什么问题，但是一旦涉及到数据更新：**数据库和缓存更新**，就容易出现缓存（Redis）和数据库（MySQL）间的数据一致性问题。
 
-![图片](https://mmbiz.qpic.cn/sz_mmbiz_png/agy2pGq8I5KWahbUeuPGrNEwTRnAKZUo8caBGicXuraUc9v6HZD2WmAWyaYEgZCib9brvBBuWibmXVKDuh2iboJibQw/640?wx_fmt=png&wxfrom=5&wx_lazy=1&wx_co=1)
-
-
-
 **不管是先写 MySQL 数据库，再删除 Redis 缓存；还是先删除缓存，再写库，都有可能出现数据不一致的情况**。
 
-#### 案例
 
-1. 如果删除缓存 Redis，但还没来得及 写库 MySQL，另一个线程就来读取，发现缓存为空，则去数据库中读取数据写入缓存，此时缓存中为脏数据。
-1. 如果先写了库，在删除缓存前，写库的线程宕机了，没有删除掉缓存，则也会出现数据不一致的情况。
-
-#### *更新缓存的 Design Pattern* 
-
-##### Cache Aside Pattern
-
-- **读的时候**：先读缓存，缓存没有的话，就读数据库，然后取出数据后放入缓存，同时返回响应。
-- **更新的时候**：先更新数据库，然后再删除缓存。
-
-其具体逻辑如下：
-
-- **失效：**应用程序先从 cache 取数据，没有的到，则从数据库中取数据，成功后，放到缓存中。
-- **命中**：应用程序从 cache 中取数据，取到后返回。
-- **更新**：先把数据存到数据库中，成功后，再让缓存淘汰。
-
-![图片](https://mmbiz.qpic.cn/sz_mmbiz_png/agy2pGq8I5KWahbUeuPGrNEwTRnAKZUoU7icbe3vyiapibTKQAKZJIJmXpfKULiac4aoJt14UPFZggkfkhW0Dpyqbw/640?wx_fmt=png&wxfrom=5&wx_lazy=1&wx_co=1)
 
 
 
@@ -810,6 +791,12 @@ redisUtil.setValueTime("userInfo"+username, user, 5);
 Redis是一个key-value存储系统，它支持存储的value类型相对更多，包括string、list、set、zset和hash。为了保证数据一致，Redis中数据的操作都是原子性的。为了保证效率，数据都是缓存在内存中。为保证安全，Redis会周期性的把更新的数据写入磁盘或者把修改操作写入追加的记录文件，并且在此基础上实现了master-slave（主从）同步。
 
 
+
+## Redis 单线程快的原因
+
+- 纯内存操作。
+- 采用单线程，避免了不必要的上下文切换，CPU 不是 Redis 的瓶颈，Redis 的瓶颈是机器内存或者网络带宽。
+- 基于 EPOLL 的 IO 多路复用。
 
 ## Redis有哪些功能？
 
@@ -853,8 +840,7 @@ Redis也是通过这两个功能保证Redis的高可用；
 Redis6.0之前是单线程的，Redis6.0之后开始支持多线程；
 redis内部使用了基于epoll的多路服用，也可以多部署几个redis服务器解决单线程的问题；
 redis主要的性能瓶颈是内存和网络；
-内存好说，加内存条就行了，而网络才是大麻烦，所以redis6内存好说，加内存条就行了；
-而**网络**才是大麻烦，所以redis6.0引入了多线程的概念，
+内存好说，加内存条就行了，而网络才是大麻烦，所以redis6.0引入了多线程的概念，
 redis6.0在网络IO处理方面引入了多线程，如网络数据的读写和协议解析等，需要注意的是，执行命令的核心模块还是单线程的。
 
 

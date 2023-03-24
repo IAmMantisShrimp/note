@@ -1,3 +1,31 @@
+集合,多线程,MySQL优化,优化查询,Mysql索引,B+树,Innodb,my...,一张表可以建16个索引,  事务,四大原则,mvc过程,spring,生命周期,设计模式(除了单例和工厂),
+
+bean的注入过程,并发编程的锁,sec...,lock,,secnized..锁升级过程,乐观锁,线程池.
+
+为什么选redis,不选其他的如mogodb.
+
+数据类型丰富,方便,速度快;
+
+reids速度为什么那么快. 在内存中,
+
+redis持久化.
+
+数据库集群,缓存穿透\击穿
+
+spring优点,ioc,iop
+
+
+
+1.
+
+
+
+
+
+
+
+
+
 ## 1、说出Object类的常用方法？
 
 protected Object clone()//创建并返回此对象的一个副本。
@@ -28,6 +56,8 @@ protected void finalize()//当垃圾回收器确定不存在对该对象的更�
 
 
 ![process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3FxXzQ1MjY2OTAw,size_16,color_FFFFFF,t_70)](https://img-blog.csdnimg.cn/20201224175637444.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3FxXzQ1MjY2OTAw,size_16,color_FFFFFF,t_70)
+
+![img](https://img2020.cnblogs.com/blog/1704945/202012/1704945-20201216230929302-183002047.png)
 
 ### 1、其次说说Collection和Collections
 

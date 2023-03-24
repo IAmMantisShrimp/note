@@ -974,6 +974,8 @@ select (select name from T_AREA where id=AREAID) 区域, sum(money) 水费2012�
 
 ![image-20230303223732597](../../Typora/image-20230303223732597.png)
 
+
+
 ## 3.条件查询
 
 case when 条件 then true结果 else false结果 end
