@@ -851,7 +851,7 @@ Redis也是通过这两个功能保证Redis的高可用；
 ## Redis真的是单线程的吗？
 
 Redis6.0之前是单线程的，Redis6.0之后开始支持多线程；
-redis内部使用了基于epoll的多路服用，也可以多部署几个redis服务器解决单线程的问题；
+redis内部使用了基于epoll的多路复用，也可以多部署几个redis服务器解决单线程的问题；
 redis主要的性能瓶颈是内存和网络；
 内存好说，加内存条就行了，而网络才是大麻烦，所以redis6内存好说，加内存条就行了；
 而**网络**才是大麻烦，所以redis6.0引入了多线程的概念，
@@ -940,9 +940,121 @@ Redis容易产生的几个问题：
 
 
 
+## 数据类型
+
+https://worktile.com/kb/ask/20474.html
+
+### 1.string（字符串）；
+
+**字符串**类型是Redis中最基本的数据存储类型，它是一个由字节组成的序列，在Rediss中是二进制安全的。这意味着该类型可以接受任何格式数据，如JPEG图像数据和Json对象说明信息。它是标准的key-value，通常用于存储字符串、整数和浮点。Value可容纳高达512MB的数据。
+
+‎由于所有数据都在单个对象中，Redis 中的字符串操作速度非常快。‎**`‎基本的‎`**‎ Redis 命令（如 SET、‎**`‎GET‎`**‎ 和 ‎**`‎DEL‎`**‎）允许您对字符串值执行基本操作。‎
+
+- **`‎SET 键值‎`‎ ‎**‎– 设置指定键的值。‎
+- **`‎GET 键‎`‎ ‎**‎– 检索指定键的值。‎
+- **`‎DEL 键‎`‎ ‎**‎– 删除给定键的值。‎
+
+应用程序场景：非常常见的场景用于计算站点访问量、当前在线人数等
+
+### 2.hash（哈希）；
+
+**Redis hash** 是一个键值(key=>value)对集合。Redis hash 是一个 string 类型的 field 和 value 的映射表，hash 特别适合用于存储对象。Redis的Hash结构可以使你像在数据库中Update一个属性一样只修改某一项属性值。和String略像，但value中存放的是一张表，一般用于多个个体的详细事项排列，String也可以做到，但要比hash麻烦许多。
+
+哈希命令允许您独立访问和更改单个或多个字段。‎
+
+- **`‎HSET‎`**‎ – 将值映射到哈希中的键。‎
+- **`‎HGET‎`**‎ – 检索与哈希中的键关联的各个值。‎
+- **`‎HGETALL‎`‎ ‎**‎– 显示整个哈希内容。‎
+- **`‎HDEL‎`**‎ – 从哈希中删除现有的键值对。‎
+
+应用程序方案：存储部分更改数据，如用户信息、会话共享。
+
+### 3.list（列表）；
+
+**Redis 列表**是简单的字符串列表，按照插入顺序排序。你可以添加一个元素到列表的头部（左边）或者尾部（右边）。Redis的列表允许用户从序列的两端推入或者弹出元素，列表由多个字符串值组成的有序可重复的序列，是链表结构，所以向列表两端添加元素的时间复杂度为0(1)，获取越接近两端的元素速度就越快。这意味着，即使有数以千万计的元素列表，也可以极快地获得10条记录在头部或尾部。可列入名单的要素最多只有4294967295个。
+
+此‎**‎字符串链表‎**‎允许您执行一组操作，例如：‎
+
+- **`‎LPUSH‎`**‎ – 将值推送到列表的左端。‎
+- **`‎RPUSH‎`**‎ – 将值推送到列表的尾端。‎
+- **`‎LRANGE‎`**‎ – 检索一系列项目。‎
+- **`‎LPOP/RPOP‎`‎ ‎**‎– 用于显示和删除两端的项目。‎
+- **`‎LINDEX‎`‎ ‎**‎– 从列表中的特定位置获取值。‎
+
+应用场景：最新消息排行榜；消息队列，以完成多程序之间的消息交换。
+
+### 4、set（集合）
+
+**Redis 的 Set** 是 string 类型的无序集合。集合是通过哈希表实现的，所以添加，删除，查找的复杂度都是 O(1)。所谓集合就是一堆不重复值的组合，并且是没有顺序的。在微博应用中，可以将一个用户所有的关注人存在一个集合中，将其所有粉丝存在一个集合。Redis还提供了诸如collection、union和differences等操作，使得实现诸如commandism、poperhike、secondfriends这样的功能变得很容易，或者选择是将结果返回给客户机，还是将它们保存到使用不同命令的新的集合中。
+
+使用‎**‎以下命令‎**‎添加、删除、检索和检查集合中的各个项目：‎
+
+- **`‎SADD‎`**‎ – 向集合中添加一个或多个项目。‎
+- **`\**`SISMEMBER`\**`**‎ – 找出一个项目是否是集合的一部分。‎
+- **`‎SMEMBERS‎`**‎ – 从集合中检索所有项目。‎
+- **`‎SREM‎`**‎ – 从集合中删除现有项。‎
 
 
 
+### 5.sort set （有序集合）
+
+**sorted set**也叫Redis zset ，和set 一样也是string类型元素的集合，且不允许重复的成员。不同的是每个元素都会关联一个double类型的分数。redis正是通过分数来为集合中的成员进行从小到大的排序。zset的成员是唯一的,但分数(score)却可以重复。
+
+您可以按成员、排序顺序和分数值访问排序集中的项目。基本命令允许您根据成员值和分数范围提取、添加、删除单个值或检索项目。‎
+
+- **`‎ZADD‎`‎ ‎**‎– 将具有分数的成员添加到排序集。‎
+- **`‎ZRANGE‎`‎ ‎**‎– 根据项目在排序顺序中的位置检索项目。‎**`‎withscores‎`‎ ‎**‎选项生成实际分数值。‎
+- **`‎ZRANGEBYSCORE ‎`**‎– 根据定义的分数范围从排序集中提取项目。‎**`‎withscores‎`‎ ‎**‎选项生成实际分数值。‎
+- **`‎ZREM‎`‎ –‎**‎从已排序的集中删除项目。‎
+
+使用场景：带有权重的元素，比如一个游戏的用户得分排行榜；比较复杂的数据结构，一般用到的场景不算太多。
+
+```java
+# RedisTemplate
+ 
+redisTemplate.opsForValue();//操作字符串
+redisTemplate.opsForHash();//操作hash
+redisTemplate.opsForList();//操作list
+redisTemplate.opsForSet();//操作set
+redisTemplate.opsForZSet();//操作有序set
+ 
+ 
+//向redis里存入数据和设置缓存时间
+//参数1：是key 键
+//参数2：是值 是存入redis里的值
+//参数3：时间，类型为long
+//参数4：时间类型，
+如：TimeUnit.MILLISECONDS 代表分钟  
+RedisTemplate.opsForValue().set("baike", "100", 60 * 10, TimeUnit.SECONDS);
+//根据key获取缓存中的val  
+RedisTemplate.opsForValue().get("baike")
+//根据key获取过期时间并指定返回形式  
+RedisTemplate.opsForValue().getOperations.getExpire("baike",TimeUnit.HOURS);
+//根据key获取过期时间并换算成指定单位
+RedisTemplate.getExpire("baike",TimeUnit.SECONDS);
+//根据key删除缓存  
+RedisTemplate.delete("baike");
+//检查key是否存在，返回boolean值  
+RedisTemplate.hasKey("baike");
+//向指定key中存放set集合  
+RedisTemplate.opsForSet().add("baike", "1","2","3");
+//设置过期时间  
+RedisTemplate.expire("baike",1000 , TimeUnit.MILLISECONDS);
+//根据key查看集合中是否存在指定数据  
+RedisTemplate.opsForSet().isMember("baike", "1");
+ 
+ 
+//time颗粒度
+TimeUnit.DAYS          	//天  
+TimeUnit.HOURS         	//小时  
+TimeUnit.MINUTES       	//分钟  
+TimeUnit.SECONDS      	//秒  
+TimeUnit.MILLISECONDS  	//毫秒 
+TimeUnit.NANOSECONDS   	//毫微秒
+TimeUnit.MICROSECONDS  	//微秒
+ 
+
+```
 
 
 

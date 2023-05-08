@@ -2,6 +2,14 @@
 
 https://www.bilibili.com/video/BV1KJ411h7NH?p=3&spm_id_from=pageDriver&vd_source=32131508025bddf2cd86c3bbf5b572cb
 
+## 开机自启动
+
+以下三项设为自启动或者手动
+
+services.msc
+
+![image-20230421084309185](../../Typora/image-20230421084309185.png)
+
 
 
 # 1.安装

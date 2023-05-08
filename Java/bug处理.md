@@ -494,11 +494,33 @@ https://blog.csdn.net/loler15/article/details/114924159
 
 
 
+# Java xx包不存在
 
+xx包已经导入,没有报红,且本地有这个依赖
 
+https://www.zhangbj.com/p/1213.html
 
+定位到所在模块,将imi文件删除
 
+![image-20230505101623567](../Typora/image-20230505101623567.png)
 
+在该路径终端下执行下面命令
 
+`-U`：强制更新。
 
+`-e`：详细异常。
+
+```cmd
+mvn clean install -U -e 
+```
+
+再执行
+
+```cmd
+mvn -U idea:idea
+```
+
+就会重新生成imi文件
+
+![image-20230505101743172](../Typora/image-20230505101743172.png)
 

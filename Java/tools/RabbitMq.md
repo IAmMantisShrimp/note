@@ -1744,11 +1744,80 @@ public class MyConsumer {
 
 
 
+# 应用
 
+## 使用rabbitmq实现提醒发送短信
 
+1.定义好交换机，队列和路由键的名字。
 
+```java
+public class MqConst {
+ 
+    /**
+     * 短信
+     */
+    public static final String EXCHANGE_DIRECT_MSM = "exchange.direct.msm";
+    public static final String ROUTING_MSM_ITEM = "msm.item";
+    //队列
+    public static final String QUEUE_MSM_ITEM  = "queue.msm.item";
+ 
+}
+```
 
+2.消息转换器转换成json
 
+```java
+import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
+import org.springframework.amqp.support.converter.MessageConverter;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+ 
+@Configuration
+public class MQConfig {
+    @Bean
+    public MessageConverter messageConverter(){
+        return new Jackson2JsonMessageConverter();
+    }
+}
+```
+
+3.订单模块中提交订单（记得引入公共模块，以及MsmVo实现Serializable）：
+
+```java
+    @PostMapping("/auth/submitOrder/{scheduleId}/{patientId}")
+    public Result submitOrder(@PathVariable Long scheduleId,
+                              @PathVariable Long patientId){
+        //一堆乱七八糟的业务流程
+        //。。。。
+ 
+        //短信提示
+        MsmVo msmVo = new MsmVo();
+        msmVo.setPhone(orderInfo.getPatientPhone());
+        msmVo.setTemplateCode("SMS_194640721");
+        rabbitTemplate.convertAndSend(MqConst.EXCHANGE_DIRECT_MSM, MqConst.ROUTING_MSM_ITEM, msmVo);
+ 
+        return Result.ok(orderInfo);
+    }
+```
+
+4.短信模块中加入component（记得引入公共模块）：
+
+```Java
+@Component
+public class SmsReceiver {
+    @Autowired
+    private SmsService msmService;
+ 
+    @RabbitListener(bindings = @QueueBinding(
+            value = @Queue(value = MqConst.QUEUE_MSM_ITEM, durable = "true"),
+            exchange = @Exchange(value = MqConst.EXCHANGE_DIRECT_MSM),
+            key = {MqConst.ROUTING_MSM_ITEM}
+    ))
+    public void send(MsmVo msmVo, Message message, Channel channel) {
+        msmService.send(msmVo);
+    }
+}
+```
 
 
 

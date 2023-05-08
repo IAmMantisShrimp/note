@@ -9304,7 +9304,7 @@ GetMapping设置多个路径
 
 ### 1.Object
 
-前端传递参数如果是一个object的话,如{id:'1',name:'2222'}
+前端传递参数如果是一个object的话,如{id:'1',name:'2222'},即json格式
 
 后端参数接收的话，需要使用@RequestBody,requestBody里面放置的是一个实体类
 
@@ -9324,6 +9324,17 @@ public Result<?> generatedData(@RequestBody ApplyObject applyObject){
 ```java
 @PostMapping(value = "/generatedData")
 public Result<?> generatedData( @RequestParam("id") String id, @RequestParam("name") String name) throws Exception {
+   
+    }
+```
+
+### 3.如果拼接的字符串是一个对象
+
+前端传递的参数如果是一个拼接的带?的字符串的话：如 xxx/generatedData?id=1&name=222
+
+```java
+@PostMapping(value = "/generatedData")
+public Result<?> generatedData(User user) throws Exception {
    
     }
 ```

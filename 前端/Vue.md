@@ -1683,5 +1683,29 @@ export default {
 </style>
 ```
 
+# 静态文件链接
 
+![image-20230506163128207](G:/Document/mdNote/Typora/image-20230506163128207.png)
+
+用base目录来做前缀,
+
+当没有指定前缀时,默认是```/```, --> 访问public/hello.jpg --> href="/hello.jpg"
+
+当指定前缀为```publicPath: '/onduty'```, --> 访问public/hello.jpg --> href="/onduty/hello.jpg"
+
+vue页面要获取publicPath
+
+```
+publicPath: process.env.BASE_URL,
+```
+
+如这里,publicPath = /onduty/
+
+超链接:
+
+```
+:href="this.publicPath+'static/exampleFile/水利厅2023年五一节假期值班情况表0501 .docx'"
+```
+
+![image-20230506163224255](G:/Document/mdNote/Typora/image-20230506163224255.png)
 

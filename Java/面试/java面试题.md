@@ -1186,3 +1186,34 @@ ap 中是否存在某个键，而应该用containsKey()方法来判断。Hashtab
         	包装类型一般可以放在集合中使用，如 Collection集合中List、Set，以及Map键值对存储。
 
 ![img](https://img-blog.csdnimg.cn/20190226164706730.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3FxXzM0ODIwODAz,size_16,color_FFFFFF,t_70)
+
+
+
+## 44.ConcurrentHashMap与HashMap的区别
+
+ConcurrentHashMap与HashMap的区别是：1.基本概念不同；2.底层数据结构不同；3.线程安全属性不同；4.对整个桶数组的处理方式不同。基本概念不同在于，ConcurrentHashMap是一个支持高并发更新与查询的哈希表；而HashMap是基于哈希表的Map接口的实现。
+
+### 1.基本概念不同
+
+ConcurrentHashMap是一个支持高并发更新与查询的哈希表。在保证安全的前提下，进行检索不需要锁定。
+
+HashMap是基于哈希表的Map接口的实现，此实现提供所有可选的映射操作，并允许使用null值和null键。
+
+### 2.底层数据结构不同
+
+HashMap的底层数据结构主要是：数组+链表，确切的说是由链表为元素的数组。
+
+ConcurrentHashMap的底层数据结构是：Segments数组+HashEntry数组+链表。
+
+### 3.线程安全属性不同
+
+ConcurrentHashMap是线程安全的数组，它采用分段锁保证安全性。容器中有多把锁，每一把锁锁一段数据，这样在多线程访问时不同段的数据时，就不会存在锁竞争了，这样便可以有效地提高并发效率。
+
+而HashMap不是线程安全，没有锁机制，在多线程环境下会导致数据覆盖之类的问题，所以在多线程中使用HashMap是会抛出异常的。
+
+### 4.对整个桶数组的处理方式不同
+
+ConcurrentHashMap对整个桶数组进行了分段；而HashMap则没有对整个桶数组进行分段。
+
+
+
